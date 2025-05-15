@@ -1,0 +1,7 @@
+pytest>=6.0
+flake8>=3.8
+black>=22.0
+requests>=2.25  # For example usage in README or tests involving URL fetching
+twine>=3.0      # For publishing to PyPI
+build>=0.7      # For building the package (PEP 517)
+wheel           # For building wheels
