@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seokar"
+version = "0.1.0"  # اولین نسخه شما
+authors = [
+    { name = "Sajjad Akbari", email = "sajjadakbari.ir@email.com" },
+]
+description = "A Python library for comprehensive on-page SEO analysis of HTML content."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+keywords = ["seo", "seo analysis", "html parser", "meta tags", "opengraph", "twitter card"]
+classifiers = [
+    "Development Status :: 3 - Alpha",  # یا "4 - Beta" اگر آماده‌تر است
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "beautifulsoup4>=4.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sajjadeakbari/seokar"
+"Bug Tracker" = "https://github.com/sajjadeakbari/seokar/issues"
+Documentation = "https://github.com/sajjadeakbari/seokar#api-reference" # لینک به بخش API در README
+
+# Optional: If you plan to have a CLI tool later
+# [project.scripts]
+# seokar = "seokar.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]  # محل جستجوی پکیج‌ها، . یعنی ریشه پروژه
+include = ["seokar*"]  # پکیج‌هایی که باید شامل شوند
+exclude = ["tests*"]  # پکیج‌هایی که نباید شامل شوند
+
+# Optional: Configuration for linters/formatters
+[tool.black]
+line-length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203" # Whitespace before ':' (conflicts with Black)
