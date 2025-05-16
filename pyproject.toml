@@ -51,3 +51,9 @@ line-length = 100
 [tool.flake8]
 max-line-length = 100 
 extend-ignore = "E203" # Whitespace before ':' (conflicts with Black)
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    # "pytest-cov", # برای گزارش پوشش تست (اختیاری)
+]
