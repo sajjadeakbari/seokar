@@ -4,159 +4,213 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/seokar)
 
-**Seokar** is a powerful and comprehensive Python library designed for in-depth on-page SEO analysis of HTML content. It helps developers and SEO professionals to audit web pages, identify issues, and get actionable recommendations to improve search engine visibility and user experience.
+**Seokar** is a powerful and comprehensive Python library designed for in-depth on-page SEO analysis of HTML content. It helps developers and SEO professionals audit web pages, identify issues, and get actionable recommendations to improve search engine visibility and user experience.
 
-The library is thread-safe, memory-efficient, and provides detailed insights into meta tags, content quality, page structure, links, social media presence, and structured data.
+---
 
 ## ✨ Key Features
 
-*   **Comprehensive Analysis:** Covers a wide range of on-page SEO factors including:
-    *   **Meta Tags:** Title (length, presence), Meta Description (length, presence), Meta Robots (directives like `noindex`, `nofollow`), Canonical URL (presence, correctness), Viewport (configuration for mobile), Charset (declaration, UTF-8 recommendation), HTML Language (declaration).
-    *   **Favicon:** Detection of favicon link or default.
-    *   **Heading Structure:** H1-H6 hierarchy, count (especially H1s), logical order, content length and word count for important headings.
-    *   **Content Quality:** Main content length (thin content detection), Text-to-HTML ratio, Readability (Flesch Reading Ease score), Keyword Density (single words and bigrams, excluding stop words).
-    *   **Image SEO:** Alt text presence, empty alt text (distinguishing decorative vs. missing), alt text length.
-    *   **Link Analysis:** Internal and external links, `nofollow`, `sponsored`, `ugc` attributes, anchor text distribution (generic, branded, keyword-like).
-    *   **Social Media Tags:** Open Graph (og:*) tags and Twitter Card (twitter:*) tags validation for essential properties.
-    *   **Structured Data:** Detection and extraction of JSON-LD, Microdata, and RDFa, along with identified Schema.org types.
-*   **Actionable Recommendations:** Provides clear, specific suggestions for fixing identified issues, categorized by severity (INFO, GOOD, WARNING, ERROR, CRITICAL).
-*   **SEO Health Score:** Calculates an overall score (0-100%) based on the severity and number of issues found.
-*   **Detailed Reporting:** Returns a well-structured dictionary containing all analysis results, issues, and recommendations.
-*   **Thread-Safe Caching:** Implements an intelligent caching mechanism for page elements (meta tags, headings, links, etc.) to optimize performance on repeated access, with thread-safety.
-*   **Robust & Reliable:** Includes strict input validation and advanced URL handling, properly resolving relative URLs and considering the page's `<base>` tag.
-*   **Modern Python:** Utilizes strict type hinting (including `Literal` for Enums) for enhanced code quality and IDE support, and `dataclasses` for structured results. Optimized for memory usage with `__slots__`.
-*   **Customizable Constants:** Allows for easy adjustment of SEO best practice thresholds (e.g., optimal title length, stop words) via class attributes.
+- **Comprehensive Analysis:** Covers a wide range of on-page SEO factors:
+  - **Meta Tags:** Title, Meta Description, Meta Robots, Canonical URL, Viewport, Charset, HTML Language
+  - **Favicon:** Detection of favicon link or default
+  - **Heading Structure:** H1-H6 tags count, hierarchy, and content quality
+  - **Content Quality:** Length, thin content detection, Text-to-HTML ratio, Readability (Flesch Reading Ease), Keyword Density
+  - **Image SEO:** `alt` text presence and quality
+  - **Link Analysis:** Internal/external links, `nofollow`, `sponsored`, `ugc` attributes, anchor text types
+  - **Social Media Tags:** Open Graph (og:*) and Twitter Card (twitter:*) tags validation
+  - **Structured Data:** JSON-LD, Microdata, RDFa detection with Schema.org types
+
+- **Actionable Recommendations:** Clear, severity-based suggestions to fix issues (INFO, GOOD, WARNING, ERROR, CRITICAL)
+
+- **SEO Health Score:** Overall score (0-100%) based on found issues severity
+
+- **Detailed Reporting:** Well-structured dictionary with all results, issues, and recommendations
+
+- **Thread-Safe Caching:** Optimizes repeated analysis with safe caching
+
+- **Modern Python:** Strict typing, `dataclasses`, `__slots__` for memory optimization
+
+- **Customizable Constants:** Easily adjust SEO thresholds and stop words
+
+---
 
 ## 🚀 Installation
-
-You can install Seokar using pip:
 
 ```bash
 pip install seokar
 ```
-*(Note: Ensure the package name `seokar` is available on PyPI or use your chosen unique name).*
+---
 
 ## 🛠️ Basic Usage
 
-Here's a simple example of how to use Seokar:
 
 ```python
 from seokar import Seokar, SEOResultLevel, __version__
-
-# Sample HTML content (can be fetched from a URL using requests or other libraries)
-html_document = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Awesome Test Page - SEO Analysis Example</title>
-    <meta name="description" content="A short but sweet description for this testing page. It aims to be optimal.">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="canonical" href="https://example.com/test-page">
-    <!-- <meta name="robots" content="noindex"> -->
-</head>
-<body>
-    <h1>Main Heading for the Page: SEO Rocks!</h1>
-    <p>This is some paragraph text. It's important for content quality analysis. We need enough content to pass the minimum length requirement and to check readability.</p>
-    <h2>A Subheading Here</h2>
-    <p>More content goes here. Links are also important.</p>
-    <img src="image.png" alt="A descriptive alt text for the image example">
-    <img src="decorative.gif" alt=""> <!-- Decorative image -->
-    <p>
-        An internal link: <a href="/internal-page">Click Here</a><br>
-        An external link: <a href="https://externalsite.com" rel="nofollow">External Site</a>
-    </p>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": "My Awesome Test Page"
-    }
-    </script>
-</body>
-</html>
-"""
-page_url = "https://example.com/test-page"
-
-# Initialize the analyzer
-analyzer = Seokar(html_content=html_document, url=page_url)
-
-# Get the library version
-print(f"Using Seokar version: {__version__}") # or analyzer.get_version()
-
-# Perform the analysis
-report = analyzer.analyze()
-
-# Print the overall SEO Health Score
-print(f"\nOverall SEO Health Score: {report['seo_health']['score']}%")
-print(f"Critical Issues: {report['seo_health']['critical_issues_count']}")
-print(f"Error Issues: {report['seo_health']['error_issues_count']}")
-print(f"Warning Issues: {report['seo_health']['warning_issues_count']}")
-
-# Print some basic SEO info
-print(f"\nPage Title: {report['basic_seo']['title']}")
-print(f"Meta Description: {report['basic_seo']['meta_description']}")
-print(f"Canonical URL: {report['basic_seo']['canonical_url']}")
-
-# Print issues with WARNING level or higher
-print("\nIdentified Issues (Warning or higher):")
-for issue in report['issues']:
-    # The issue['level'] is a dictionary representation of the SEOResultLevel enum
-    # Access 'value' for numeric comparison or 'name' for string representation
-    if issue['level']['value'] >= SEOResultLevel.WARNING.value:
-        print(f"- Type: {issue['element_type']}, Level: {issue['level']['name']}")
-        print(f"  Message: {issue['message']}")
-        if issue['details']:
-            print(f"  Details: {issue['details']}")
-        if issue['recommendation']:
-            print(f"  Recommendation: {issue['recommendation']}")
-
-# Example: Accessing keyword density
-# print("\nTop Keywords (Content Quality):")
-# for term, density in report['content_quality'].get('keyword_density_top_10_with_bigrams', {}).items():
-#    print(f"- '{term}': {density}%")
 ```
+
+
+# Seokar - Comprehensive On-Page SEO Analysis Library ً
+
+[![PyPI version](https://badge.fury.io/py/seokar.svg)](https://badge.fury.io/py/seokar)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/seokar)
+
+**Seokar** is a powerful and comprehensive Python library designed for in-depth on-page SEO analysis of HTML content. It helps developers and SEO professionals audit web pages, identify issues, and get actionable recommendations to improve search engine visibility and user experience.
+
+---
+
+## âœ¨ Key Features
+
+- **Comprehensive Analysis:** Covers a wide range of on-page SEO factors:
+  - **Meta Tags:** Title, Meta Description, Meta Robots, Canonical URL, Viewport, Charset, HTML Language
+  - **Favicon:** Detection of favicon link or default
+  - **Heading Structure:** H1-H6 tags count, hierarchy, and content quality
+  - **Content Quality:** Length, thin content detection, Text-to-HTML ratio, Readability (Flesch Reading Ease), Keyword Density
+  - **Image SEO:** `alt` text presence and quality
+  - **Link Analysis:** Internal/external links, `nofollow`, `sponsored`, `ugc` attributes, anchor text types
+  - **Social Media Tags:** Open Graph (og:*) and Twitter Card (twitter:*) tags validation
+  - **Structured Data:** JSON-LD, Microdata, RDFa detection with Schema.org types
+
+- **Actionable Recommendations:** Clear, severity-based suggestions to fix issues (INFO, GOOD, WARNING, ERROR, CRITICAL)
+
+- **SEO Health Score:** Overall score (0-100%) based on found issues severity
+
+- **Detailed Reporting:** Well-structured dictionary with all results, issues, and recommendations
+
+- **Thread-Safe Caching:** Optimizes repeated analysis with safe caching
+
+- **Modern Python:** Strict typing, `dataclasses`, `__slots__` for memory optimization
+
+- **Customizable Constants:** Easily adjust SEO thresholds and stop words
+
+---
+
+
 
 ## 📊 Understanding the Report
 
-The `analyze()` method returns a dictionary containing a comprehensive breakdown of the SEO analysis. Key top-level keys in the report include:
+The analysis report returned by `Seokar.analyze()` is a structured dictionary containing multiple sections:
 
-*   `analyzer_version`: Version of Seokar used.
-*   `url`: The URL analyzed.
-*   `basic_seo`: Information on title, meta description, robots, canonical, viewport, charset, language, favicon.
-*   `headings`: Data on H1-H6 tags, including their content, count, and hierarchy assessment.
-*   `content_quality`: Analysis of content length, text-to-HTML ratio, readability score, and keyword density.
-*   `images`: Findings related to image `alt` texts.
-*   `links`: Details about internal and external links, `nofollow` attributes, and anchor text patterns.
-*   `social_media_tags`: Extracted Open Graph and Twitter Card tags.
-*   `structured_data`: Detected JSON-LD, Microdata, and RDFa, including Schema.org types.
-*   `seo_health`: The overall SEO score and counts of critical, error, and warning issues.
-*   `issues`: A list of all individual findings (dictionaries representing `SEOResult` objects, including severity level, message, details, and recommendation).
-*   `recommendations`: A consolidated list of unique, actionable recommendations for high-severity issues.
+| Section Name      | Description                                                                                      |
+|-------------------|--------------------------------------------------------------------------------------------------|
+| `seo_health`      | Overall SEO health summary with score (0-100), and count of issues by severity                   |
+| `basic_seo`       | Basic metadata extracted from the page like title, meta description, canonical URL, and language |
+| `headings`        | Details about headings (h1-h6) including counts and hierarchy correctness                         |
+| `content_quality` | Content length, text-to-HTML ratio, readability score, thin content warnings                      |
+| `image_seo`       | Image analysis for presence and quality of `alt` attributes                                     |
+| `links`           | Internal and external links details, attributes like nofollow, sponsored, ugc                    |
+| `social_tags`     | Open Graph and Twitter Card tags validation                                                     |
+| `structured_data` | Structured data found like JSON-LD, Microdata, RDFa along with schema.org types                   |
+| `issues`          | List of all issues found, each with severity, message, affected element type, and recommendations|
 
-Each sub-dictionary contains more granular data relevant to that specific SEO aspect.
+---
 
-## 🤝 Contributing
+### SEO Result Levels
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+| Level Name  | Description                         |
+|-------------|-----------------------------------|
+| INFO        | Informational notes, no issues     |
+| GOOD        | Good practice, positive signals    |
+| WARNING     | Potential issues, should review    |
+| ERROR       | Definite issues that need fixing   |
+| CRITICAL    | Severe problems, very urgent fixes |
 
-1.  Fork the Project on GitHub ([https://github.com/sajjadeakbari/seokar](https://github.com/sajjadeakbari/seokar)).
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the Branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+---
 
-Please make sure to update documentation or tests as appropriate and follow the existing code style. You can also simply open an issue with the tag "enhancement" or "bug".
-Don't forget to give the project a star! Thanks again!
+## 🔍 Detailed Tables
 
-## 📜 License
+### 1. Meta Tags Summary
 
-Distributed under the MIT License. See `LICENSE` file for more information.
+| Tag            | Found | Value Example                         | Importance                      |
+|----------------|-------|-------------------------------------|--------------------------------|
+| Title          | Yes   | "My Awesome Test Page - SEO Analysis" | Very High                     |
+| Meta Description | Yes | "A short but sweet description..."  | High                           |
+| Meta Robots    | No    | N/A                                 | Medium                        |
+| Canonical URL  | Yes   | https://example.com/test-page        | Very High                     |
+| Viewport      | Yes   | width=device-width, initial-scale=1.0 | High                        |
+| Charset       | Yes   | UTF-8                               | High                           |
+| HTML Language | Yes   | en                                  | Medium                        |
 
-[Link to LICENSE file](LICENSE)
+---
 
-## 📧 Contact
+### 2. Heading Tags Overview
 
-Sajjad Akbari - [sajjadakbari.ir@email.com](mailto:sajjadakbari.ir@email.com)
+| Tag  | Count | Expected | Status         | Notes                            |
+|-------|-------|----------|----------------|---------------------------------|
+| H1    | 1     | 1        | Good           | Perfect number of main headings |
+| H2    | 1     | ≥ 0      | Good           | Appropriate subheading count    |
+| H3-H6 | 0     | ≥ 0      | Good           | No problem                      |
 
-Project Link: [https://github.com/sajjadeakbari/seokar](https://github.com/sajjadeakbari/seokar)
+---
+
+### 3. Content Quality Metrics
+
+| Metric            | Value          | Recommended Range       | Status       |
+|-------------------|----------------|------------------------|--------------|
+| Text Length       | 180 words      | > 300 words preferred   | Warning      |
+| Text-to-HTML Ratio| 45%            | > 25%                  | Good         |
+| Flesch Reading Ease| 60.0          | 50-70 (easy to read)    | Good         |
+| Thin Content      | No             | No                     | Good         |
+| Keyword Density   | 1.5%           | 1-3% optimal           | Good         |
+
+---
+
+### 4. Image SEO Summary
+
+| Check             | Count Found | Count Passed | Status         |
+|-------------------|-------------|--------------|----------------|
+| Images with Alt    | 2           | 1            | Warning        |
+| Images Missing Alt | 1           | N/A          | Needs Fix      |
+
+---
+
+### 5. Links Analysis
+
+| Type           | Count | Notes                                     |
+|----------------|-------|-------------------------------------------|
+| Internal Links | 1     | Good internal linking structure           |
+| External Links | 1     | One link marked nofollow (OK for SEO)     |
+| Nofollow Attr  | 1     | Proper use of nofollow attribute           |
+| Sponsored/UGC  | 0     | No sponsored or UGC links detected         |
+
+---
+
+### 6. Social Media Tags
+
+| Tag Type    | Found | Status       |
+|-------------|-------|--------------|
+| Open Graph  | Yes   | Good         |
+| Twitter Card| Yes   | Good         |
+
+---
+
+### 7. Structured Data Types
+
+| Type          | Found | Notes                    |
+|---------------|-------|--------------------------|
+| JSON-LD       | Yes   | Schema.org WebPage type   |
+| Microdata     | No    |                          |
+| RDFa          | No    |                          |
+
+---
+
+## 📚 References & Resources
+
+- [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide)
+- [Mozilla Developer Network - SEO Basics](https://developer.mozilla.org/en-US/docs/Learn/Tools_and_testing/Cross_browser_testing/SEO)
+- [Schema.org Structured Data](https://schema.org/docs/gs.html)
+
+---
+
+## 📝 License
+
+Seokar is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+---
+
+## 📬 Contact & Support
+
+For issues, suggestions, or contributions, please open an issue or pull request on the [GitHub repository](https://github.com/yourusername/seokar).
+
+Thank you for using Seokar!  
+Happy SEO analyzing!
