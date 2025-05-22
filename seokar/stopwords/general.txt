@@ -1,0 +1,11 @@
+stopwords/
+├── general.txt               # تمام استاپ‌وردهای عمومی
+├── prepositions.txt          # حروف اضافه
+├── pronouns.txt              # ضمایر
+├── verbs.txt                 # افعال کم‌معنا
+├── connectors.txt            # حروف ربط
+├── politeness.txt            # تعارفات و کلمات رسمی
+├── numbers.txt               # اعداد متنی
+├── questions.txt             # کلمات پرسشی و اشاره
+├── timespace.txt             # زمان و مکان عمومی
+├── domain_neutral.txt        # کلمات خنثی حوزه‌ای
