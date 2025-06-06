@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seokar"
+version = "2.0.0"
+authors = [
+  { name = "Sajjadakbari", email = "sajjadakbari.ir@gmail.com" },
+]
+description = "A powerful, world-class SEO analysis library."
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["seo", "analysis", "website", "optimization", "python", "library"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "requests>=2.25.1",
+    "beautifulsoup4>=4.9.3",
+    "tldextract>=3.1.0",
+    "textstat>=0.7.2",
+    "nltk>=3.6.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/sajjadeakbari/seokar/"
+Bug Tracker = "https://github.com/sajjadeakbari/seokar/issues"
+Website = "https://sajjadakbari.ir"
+
+[project.optional-dependencies]
+dev = ["pytest>=6.0", "pytest-cov>=2.0"]
+docs = ["sphinx>=4.0", "sphinx-rtd-theme>=0.5"]
