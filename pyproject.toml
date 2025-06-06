@@ -28,11 +28,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
-    "requests>=2.25.1",
+    "httpx>=0.23.0", # Replaced requests with httpx
     "beautifulsoup4>=4.9.3",
     "tldextract>=3.1.0",
     "textstat>=0.7.2",
-    # NLTK removed as its punkt tokenizer is no longer a direct dependency
 ]
 
 [project.urls]
