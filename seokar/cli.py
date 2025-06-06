@@ -1,54 +1,77 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Seokar Welcome Message Module
+
+This module provides a visually appealing welcome message for the Seokar SEO analysis library.
+It's designed to be executed as a console script upon successful installation.
+"""
+
 import sys
+from typing import NoReturn
 
-def welcome_message():
+
+class ANSIColors:
+    """Container for ANSI color codes used in terminal formatting"""
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+def display_welcome_message() -> NoReturn:
     """
-    Displays a welcome message and initial setup instructions for Seokar.
-    This function is intended to be called via a console script.
+    Display a comprehensive welcome message for Seokar installation.
+    
+    This function prints a formatted message with:
+    - Library introduction
+    - Quick start example
+    - Resource references
+    - Visual separators and styling
+    
+    The function terminates the program with exit code 0 after display.
     """
-    # ANSI escape codes for colors
-    COLOR_BLUE = "\033[94m"
-    COLOR_GREEN = "\033[92m"
-    COLOR_YELLOW = "\033[93m"
-    COLOR_RESET = "\033[0m"
-    COLOR_BOLD = "\033[1m"
-    COLOR_UNDERLINE = "\033[4m"
+    colors = ANSIColors()
+    
+    message_template = f"""
+{colors.BOLD}{colors.GREEN}====================================================={colors.RESET}
+{colors.BOLD}{colors.BLUE}    _.-=-._ _.-=-._  {colors.YELLOW}Welcome to Seokar!{colors.BLUE}  _.-=-._ _.-=-._    {colors.RESET}
+{colors.BOLD}{colors.GREEN}====================================================={colors.RESET}
 
-    message = f"""
-{COLOR_BOLD}{COLOR_GREEN}====================================================={COLOR_RESET}
-{COLOR_BOLD}{COLOR_BLUE}    _.-=-._ _.-=-._  {COLOR_YELLOW}Welcome to Seokar!{COLOR_BLUE}  _.-=-._ _.-=-._    {COLOR_RESET}
-{COLOR_BOLD}{COLOR_GREEN}====================================================={COLOR_RESET}
-
-{COLOR_BOLD}🎉 Seokar has been successfully installed! 🎉{COLOR_RESET}
+{colors.BOLD}🎉 Seokar has been successfully installed! 🎉{colors.RESET}
 
 Seokar is your powerful, world-class library for in-depth SEO analysis.
 Get ready to uncover deep insights into web page performance, content quality,
 technical health, and security.
 
-{COLOR_BOLD}{COLOR_YELLOW}✨ Before you dive in, a quick but important step:{COLOR_RESET}
-   Seokar utilizes NLTK for advanced text analysis (e.g., readability, keyword density).
-   Please download the necessary 'punkt' data by running the following command:
-
-   {COLOR_BLUE}{COLOR_UNDERLINE}python -m nltk.downloader punkt{COLOR_RESET}
-
-{COLOR_BOLD}{COLOR_YELLOW}🚀 Quick Start Example:{COLOR_RESET}
+{colors.BOLD}{colors.YELLOW}🚀 Quick Start Example:{colors.RESET}
    Here's how you can perform your first SEO analysis:
 
-   {COLOR_BLUE}from seokar.analyzer import SeokarAnalyzer
+   {colors.BLUE}from seokar.analyzer import SeokarAnalyzer
 
    analyzer = SeokarAnalyzer(url="https://example.com")
    result = analyzer.analyze()
 
    print(result.to_markdown()) # For a human-readable report
-   # print(result.to_dict())   # For structured data (e.g., JSON){COLOR_RESET}
+   # print(result.to_dict())   # For structured data (e.g., JSON){colors.RESET}
 
-{COLOR_BOLD}{COLOR_YELLOW}🌐 Explore more:{COLOR_RESET}
+{colors.BOLD}{colors.YELLOW}🌐 Explore more:{colors.RESET}
    Visit our official website for comprehensive documentation, advanced usage,
-   and community support: {COLOR_UNDERLINE}https://sajjadakbari.ir{COLOR_RESET}
+   and community support: {colors.UNDERLINE}https://sajjadakbari.ir{colors.RESET}
 
-{COLOR_BOLD}{COLOR_GREEN}====================================================={COLOR_RESET}
+{colors.BOLD}{colors.GREEN}====================================================={colors.RESET}
 """
-    print(message)
-    sys.exit(0) # Exit cleanly after printing the message
+    print(message_template)
+    sys.exit(0)
+
+
+def main() -> None:
+    """Main entry point for the welcome message script"""
+    display_welcome_message()
+
 
 if __name__ == "__main__":
-    welcome_message()
+    main()
