@@ -5,28 +5,32 @@ from typing import Optional, Any, Dict, Tuple
 from datetime import datetime, timedelta
 
 
-def fetch_page_content(url: str, timeout: int = 10, retries: int = 3) -> Optional[bytes]:
+def fetch_page_content(url: str, timeout: int = 10, retries: int = 3) -> Optional[Tuple[bytes, int, Dict[str, str]]]:
     """
-    Fetches the raw content of a web page (as bytes) with retries and exponential backoff.
+    Fetches the raw content, HTTP status code, and response headers of a web page
+    with retries and exponential backoff.
+
+    Returns:
+        A tuple of (content_bytes, status_code, headers_dict) if successful (status code 2xx).
+        Returns None if fetching fails or if the response is a client/server error (4xx/5xx).
     """
     for attempt in range(retries):
         try:
             response = requests.get(url, timeout=timeout, allow_redirects=True)
             response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-            return response.content
+            return response.content, response.status_code, dict(response.headers)
         except (ConnectionError, Timeout) as e:
             if attempt < retries - 1:
                 sleep_time = 2 ** attempt
-                # print(f"Connection/Timeout error for {url}: {e}. Retrying in {sleep_time} seconds...") # For debugging purposes
                 time.sleep(sleep_time)
             else:
-                # print(f"Final Connection/Timeout error for {url}: {e}") # For debugging purposes
                 return None
-        except HTTPError as e:
-            # print(f"HTTP error for {url}: {e.response.status_code} - {e.response.reason}") # For debugging purposes
+        except HTTPError:
+            # HTTPError means a 4xx or 5xx response was received, which is not considered "successful"
+            # for content fetching purposes, so return None as per instructions.
             return None
-        except RequestException as e:
-            # print(f"An unexpected request error occurred for {url}: {e}") # For debugging purposes
+        except RequestException:
+            # Catch any other requests-related exceptions
             return None
     return None
 
@@ -43,13 +47,10 @@ def get_url_status(url: str, timeout: int = 5, retries: int = 2) -> Optional[int
         except (ConnectionError, Timeout) as e:
             if attempt < retries - 1:
                 sleep_time = 2 ** attempt
-                # print(f"Connection/Timeout error for HEAD {url}: {e}. Retrying in {sleep_time} seconds...") # For debugging purposes
                 time.sleep(sleep_time)
             else:
-                # print(f"Final Connection/Timeout error for HEAD {url}: {e}") # For debugging purposes
                 return None
         except RequestException as e:
-            # print(f"An unexpected request error occurred for HEAD {url}: {e}") # For debugging purposes
             return None
     return None
 
@@ -57,26 +58,28 @@ def get_url_status(url: str, timeout: int = 5, retries: int = 2) -> Optional[int
 class SimpleCache:
     """
     A simple in-memory cache for HTTP request results with a Time To Live (TTL).
+    Now stores (content_bytes, status_code, headers) tuples.
     """
     def __init__(self, ttl: int = 3600):
-        self._cache: Dict[str, Tuple[Any, datetime]] = {}
+        self._cache: Dict[str, Tuple[Tuple[bytes, int, Dict[str, str]], datetime]] = {}
         self._ttl = ttl
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Optional[Tuple[bytes, int, Dict[str, str]]]:
         """
-        Retrieves content from the cache if it's fresh; otherwise, returns None.
+        Retrieves content (bytes, status_code, headers) from the cache if it's fresh;
+        otherwise, returns None.
         """
         if key in self._cache:
-            value, timestamp = self._cache[key]
+            value_tuple, timestamp = self._cache[key]
             if not self._is_expired(timestamp):
-                return value
+                return value_tuple
             else:
                 del self._cache[key]  # Remove expired entry
         return None
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Tuple[bytes, int, Dict[str, str]]) -> None:
         """
-        Adds content to the cache with the current timestamp.
+        Adds content (bytes, status_code, headers) to the cache with the current timestamp.
         """
         self._cache[key] = (value, datetime.now())
 
