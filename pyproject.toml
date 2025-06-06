@@ -32,13 +32,16 @@ dependencies = [
     "beautifulsoup4>=4.9.3",
     "tldextract>=3.1.0",
     "textstat>=0.7.2",
-    "nltk>=3.6.2",
+    # NLTK removed as its punkt tokenizer is no longer a direct dependency
 ]
 
 [project.urls]
 Homepage = "https://github.com/sajjadeakbari/seokar/"
 Bug Tracker = "https://github.com/sajjadeakbari/seokar/issues"
 Website = "https://sajjadakbari.ir"
+
+[project.scripts]
+seokar-welcome = "seokar.cli:welcome_message"
 
 [project.optional-dependencies]
 dev = ["pytest>=6.0", "pytest-cov>=2.0"]
