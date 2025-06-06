@@ -1,5 +1,7 @@
 import time
 import re
+import json
+from json.decoder import JSONDecodeError
 from typing import Optional, List, Dict, Any, Tuple
 
 from bs4 import BeautifulSoup
@@ -7,10 +9,14 @@ from bs4 import BeautifulSoup
 from ..models import SEOResult, CoreWebVitalsMetrics, ContentMetrics
 from ..exceptions import SeokarError, SeokarHTTPError
 from ..utils.network import fetch_page_content, get_url_status, SimpleCache
-from ..utils.helpers import get_page_size_bytes, is_valid_url
-from ..constants.core import StatusCode, SeoLimits
+from ..utils.helpers import get_page_size_bytes, is_valid_url, clean_html_text # Added clean_html_text
+from ..utils.text_analysis import calculate_word_count, calculate_readability_flesch, calculate_keyword_density # Added text_analysis functions
+from ..constants.core import StatusCode, SeoLimits, RobotsTxt # Added RobotsTxt for robots tag check
 from ..constants.technical import CoreWebVitals, PageSpeed, TechnicalIssues
 from ..constants.security import SecurityHeaders, RecommendedSecurityValues
+from ..constants.content import ContentQuality, ReadabilityFormulas # Added content constants
+from ..constants.schema import SchemaTypes, SchemaProperties, SchemaUrls # Added schema constants
+from ..constants.local import LocalSeo # Added local SEO constants for schema check
 
 
 class SeokarAnalyzer:
@@ -69,12 +75,16 @@ class SeokarAnalyzer:
             self._loading_time_ms = (end_time - start_time) * 1000
 
             if fetched_result is None:
-                # fetch_page_content already handles 4xx/5xx as failure for content retrieval
-                # We need to get the status code specifically if content fetching failed
-                # However, for this design, we treat no content as a failure, so status code becomes irrelevant
-                # in this specific branch. If we wanted to distinguish, fetch_page_content would need to return
-                # status code even on non-2xx.
-                raise SeokarHTTPError(f"Failed to fetch content or encountered HTTP error for {self._url}.", status_code=None)
+                # fetch_page_content returns None if content fetching failed (e.g., non-2xx status, network error)
+                # We need to get a status code for the error for better reporting if possible
+                # A HEAD request might give us the status code even if GET failed for content.
+                # However, current design of fetch_page_content already implies failure for non-2xx.
+                # If content is None, we assume it's a critical failure.
+                status_on_fail = get_url_status(self._url) # Attempt to get status if content fetch failed
+                raise SeokarHTTPError(
+                    f"Failed to fetch content for {self._url}. Status Code: {status_on_fail if status_on_fail else 'Unknown'}.",
+                    status_code=status_on_fail
+                )
 
             self._html_content_bytes, self._status_code, self._response_headers = fetched_result
             self._page_size_bytes = get_page_size_bytes(self._html_content_bytes)
@@ -165,12 +175,11 @@ class SeokarAnalyzer:
         # HTTP Status Code Check
         if self._status_code is not None:
             if self._status_code >= StatusCode.BAD_REQUEST and self._status_code < StatusCode.INTERNAL_SERVER_ERROR: # 4xx
-                if self._status_code != StatusCode.NOT_FOUND:
+                if self._status_code != StatusCode.NOT_FOUND: # Exclude 404 from generic client error
                     issues.append(f"Client Error ({self._status_code}) detected.")
             elif self._status_code >= StatusCode.INTERNAL_SERVER_ERROR and self._status_code < 600: # 5xx
                 issues.append(f"Server Error ({self._status_code}) detected.")
-            # Note: 404 is generally not flagged as an "error" in this context but rather "not found"
-            # The prompt says "apart from 404", so we specifically exclude it from generic 4xx errors.
+            # If 404, it's implicitly handled by absence of content sometimes, but not a general "error"
 
         # Page Size Check
         if self._page_size_bytes is not None and self._page_size_bytes > PageSpeed.MAX_PAGE_SIZE_BYTES:
@@ -186,17 +195,18 @@ class SeokarAnalyzer:
         # Mixed Content Check
         if self._url and self._url.startswith("https://") and self._soup:
             mixed_content_found = False
-            for tag in self._soup.find_all(['img', 'link', 'script']):
+            # Check for http:// links in common tags
+            for tag in self._soup.find_all(['img', 'link', 'script', 'iframe', 'audio', 'video', 'source']):
                 src_or_href = tag.get('src') or tag.get('href')
-                if src_or_href and src_or_href.startswith("http://"):
+                if src_or_href and src_or_href.lower().startswith("http://"):
                     issues.append(TechnicalIssues.MIXED_CONTENT)
                     mixed_content_found = True
-                    break # Only need to find one instance
-            # Check for inline styles with http URLs (less common but possible)
+                    break 
+            # Check for inline styles with http URLs
             if not mixed_content_found:
                 for tag in self._soup.find_all(lambda tag: tag.has_attr('style')):
                     style_attr = tag['style']
-                    if "url('http://" in style_attr or 'url("http://' in style_attr:
+                    if "url('http://" in style_attr.lower() or 'url("http://' in style_attr.lower():
                         issues.append(TechnicalIssues.MIXED_CONTENT)
                         break
 
@@ -207,11 +217,12 @@ class SeokarAnalyzer:
         Extracts relevant security headers from the HTTP response.
         """
         security_headers_found: Dict[str, str] = {}
-        # Ensure headers are available (e.g., if content was provided directly without network request)
         if not self._response_headers:
             return security_headers_found
 
-        # Iterate through common security headers and add them if present
+        # Normalize header names for comparison (case-insensitive)
+        normalized_response_headers = {k.lower(): v for k, v in self._response_headers.items()}
+
         for header_name_constant in [
             SecurityHeaders.STRICT_TRANSPORT_SECURITY,
             SecurityHeaders.CONTENT_SECURITY_POLICY,
@@ -220,19 +231,90 @@ class SeokarAnalyzer:
             SecurityHeaders.REFERRER_POLICY,
             SecurityHeaders.PERMISSIONS_POLICY,
         ]:
-            # Headers are case-insensitive, so iterate over keys in a case-insensitive manner
-            for header_key, header_value in self._response_headers.items():
-                if header_key.lower() == header_name_constant.lower():
-                    security_headers_found[header_name_constant] = header_value
-                    break # Found the header, move to the next constant
-
+            if header_name_constant.lower() in normalized_response_headers:
+                security_headers_found[header_name_constant] = normalized_response_headers[header_name_constant.lower()]
+        
         return security_headers_found
+
+    def _extract_page_main_content(self) -> str:
+        """
+        Extracts the main readable text content from the page's HTML.
+        Focuses on the body, removing navigational and structural elements.
+        """
+        if not self._soup:
+            return ""
+
+        # Find the main content area, e.g., the <body> tag
+        body_tag = self._soup.find('body')
+        if not body_tag:
+            return ""
+
+        # Remove elements commonly not part of main content for analysis
+        for tag in body_tag.find_all(['nav', 'footer', 'header', 'aside', 'form', 'script', 'style', 'noscript', 'meta', 'link']):
+            tag.decompose() # Remove the tag and its contents
+
+        text = body_tag.get_text(separator=' ', strip=True)
+        # Further clean using the helper function
+        return clean_html_text(text)
+
+
+    def _analyze_content_metrics(self) -> Optional[ContentMetrics]:
+        """
+        Analyzes content-related metrics such as word count, readability, and keyword density.
+        """
+        main_content_text = self._extract_page_main_content()
+
+        word_count = calculate_word_count(main_content_text)
+        if word_count < 50: # Threshold for meaningful analysis
+            return None
+
+        readability_score = calculate_readability_flesch(main_content_text)
+        
+        # Fixed keywords for this stage as per instructions
+        target_keywords = ["seo", "analysis", "website", "optimization"]
+        keyword_density = calculate_keyword_density(main_content_text, target_keywords)
+
+        return ContentMetrics(
+            word_count=word_count,
+            readability_score=readability_score,
+            keyword_density=keyword_density
+        )
+
+    def _analyze_schema_markup(self) -> bool:
+        """
+        Checks for the presence and basic validity of Schema Markup (JSON-LD) on the page.
+        """
+        if not self._soup:
+            return False
+
+        schema_scripts = self._soup.find_all('script', type='application/ld+json')
+        if not schema_scripts:
+            return False
+
+        for script in schema_scripts:
+            try:
+                schema_data = json.loads(script.string)
+                # Check for required @context and @type
+                if isinstance(schema_data, dict) and schema_data.get('@context') == SchemaUrls.JSON_LD_CONTEXT and '@type' in schema_data:
+                    return True # Found at least one valid-looking schema
+                # Handle array of schema objects if necessary (though prompt implied single object check)
+                elif isinstance(schema_data, list):
+                    for item in schema_data:
+                        if isinstance(item, dict) and item.get('@context') == SchemaUrls.JSON_LD_CONTEXT and '@type' in item:
+                            return True
+            except JSONDecodeError:
+                continue # Ignore malformed JSON-LD
+            except Exception:
+                continue # Catch any other unexpected errors during parsing/checking
+        
+        return False
 
 
     def analyze(self) -> SEOResult:
         """
         Performs a full SEO analysis on the initialized page content,
-        including basic page info, technical issues, and security headers.
+        including basic page info, technical issues, security headers,
+        content metrics, and schema markup presence.
         """
         # If initialized with a URL and content hasn't been fetched/parsed yet
         if self._url and self._soup is None:
@@ -252,11 +334,15 @@ class SeokarAnalyzer:
         # Perform technical and security analysis
         technical_issues = self._analyze_technical_issues()
         security_headers = self._analyze_security_headers()
+        
+        # Perform content analysis
+        content_metrics = self._analyze_content_metrics()
+
+        # Analyze schema markup
+        schema_present = self._analyze_schema_markup()
 
         # Initialize placeholder for Core Web Vitals (real values come from browser data)
         core_web_vitals = CoreWebVitalsMetrics()
-        # Initialize placeholder for Content Metrics (will be populated later)
-        content_metrics: Optional[ContentMetrics] = None
 
 
         # Create and return the SEOResult object
@@ -272,7 +358,7 @@ class SeokarAnalyzer:
             robots_tag=robots_tag,
             technical_issues=technical_issues,
             security_headers=security_headers,
-            schema_present=False, # Placeholder for schema analysis
+            schema_present=schema_present,
             core_web_vitals=core_web_vitals,
             content_metrics=content_metrics,
             # analysis_timestamp is automatically set by default_factory
