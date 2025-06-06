@@ -1,14 +1,14 @@
-import requests
-from requests.exceptions import RequestException, HTTPError, ConnectionError, Timeout
-import time
+import httpx
+from httpx import RequestError, HTTPStatusError, ConnectError, TimeoutException
+import asyncio
 from typing import Optional, Any, Dict, Tuple
 from datetime import datetime, timedelta
 
 
-def fetch_page_content(url: str, timeout: int = 10, retries: int = 3) -> Optional[Tuple[bytes, int, Dict[str, str]]]:
+async def fetch_page_content(url: str, timeout: int = 10, retries: int = 3) -> Optional[Tuple[bytes, int, Dict[str, str]]]:
     """
     Fetches the raw content, HTTP status code, and response headers of a web page
-    with retries and exponential backoff.
+    asynchronously with retries and exponential backoff using httpx.
 
     Returns:
         A tuple of (content_bytes, status_code, headers_dict) if successful (status code 2xx).
@@ -16,41 +16,44 @@ def fetch_page_content(url: str, timeout: int = 10, retries: int = 3) -> Optiona
     """
     for attempt in range(retries):
         try:
-            response = requests.get(url, timeout=timeout, allow_redirects=True)
-            response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-            return response.content, response.status_code, dict(response.headers)
-        except (ConnectionError, Timeout) as e:
+            # Use httpx.AsyncClient for asynchronous requests
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                response = await client.get(url)
+                response.raise_for_status()  # Raises HTTPStatusError for bad responses (4xx or 5xx)
+                return response.content, response.status_code, dict(response.headers)
+        except (ConnectError, TimeoutException) as e:
             if attempt < retries - 1:
                 sleep_time = 2 ** attempt
-                time.sleep(sleep_time)
+                await asyncio.sleep(sleep_time) # Asynchronous sleep
             else:
                 return None
-        except HTTPError:
-            # HTTPError means a 4xx or 5xx response was received, which is not considered "successful"
-            # for content fetching purposes, so return None as per instructions.
+        except HTTPStatusError:
+            # HTTPStatusError means a 4xx or 5xx response was received.
+            # As per previous instructions, this is treated as a failure for content fetching.
             return None
-        except RequestException:
-            # Catch any other requests-related exceptions
+        except RequestError:
+            # Catch any other httpx-related exceptions
             return None
     return None
 
 
-def get_url_status(url: str, timeout: int = 5, retries: int = 2) -> Optional[int]:
+async def get_url_status(url: str, timeout: int = 5, retries: int = 2) -> Optional[int]:
     """
-    Retrieves the HTTP status code of a URL without downloading the full content.
+    Retrieves the HTTP status code of a URL asynchronously without downloading the full content.
     Uses HEAD request with retries and exponential backoff.
     """
     for attempt in range(retries):
         try:
-            response = requests.head(url, timeout=timeout, allow_redirects=True)
-            return response.status_code
-        except (ConnectionError, Timeout) as e:
+            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+                response = await client.head(url)
+                return response.status_code
+        except (ConnectError, TimeoutException) as e:
             if attempt < retries - 1:
                 sleep_time = 2 ** attempt
-                time.sleep(sleep_time)
+                await asyncio.sleep(sleep_time)
             else:
                 return None
-        except RequestException as e:
+        except RequestError:
             return None
     return None
 
@@ -59,6 +62,7 @@ class SimpleCache:
     """
     A simple in-memory cache for HTTP request results with a Time To Live (TTL).
     Now stores (content_bytes, status_code, headers) tuples.
+    Designed to be compatible with asynchronous usage.
     """
     def __init__(self, ttl: int = 3600):
         self._cache: Dict[str, Tuple[Tuple[bytes, int, Dict[str, str]], datetime]] = {}
