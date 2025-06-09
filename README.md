@@ -7,6 +7,8 @@
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 [![Documentation Status](https://img.shields.io/badge/docs-passing-brightgreen?style=flat-square)](https://github.com/sajjadeakbari/seokar#readme)
 
+![Seokar logo](https://i.imgur.com/vDe6nbS.jpeg)
+
 **Seokar** is an enterprise-grade Python library for comprehensive on-page SEO analysis. Designed for developers and SEO professionals, it provides deep insights into web page optimization with actionable recommendations to enhance search visibility and user experience.
 
 ---
