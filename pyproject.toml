@@ -1,47 +1,92 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "seokar"
 version = "2.0.0"
-authors = [
-  { name = "Sajjadakbari", email = "sajjadakbari.ir@gmail.com" },
-]
-description = "A powerful, world-class SEO analysis library."
+description = "Next Generation SEO Toolkit for Python"
 readme = "README.md"
-requires-python = ">=3.8"
-keywords = ["seo", "analysis", "website", "optimization", "python", "library"]
+requires-python = ">=3.10"
+authors = [
+    {name = "Sajjad Akbari", email = "sajjadakbari.ir@gmail.com"},
+]
+license = {text = "MIT"}
+keywords = ["seo", "marketing", "web", "optimization", "async"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
 ]
+
 dependencies = [
-    "httpx>=0.23.0", # Replaced requests with httpx
-    "beautifulsoup4>=4.9.3",
-    "tldextract>=3.1.0",
-    "textstat>=0.7.2",
+    "httpx>=0.24.0",
+    "beautifulsoup4>=4.12.0",
+    "typer>=0.9.0",
+    "pydantic>=2.0",
+    "aiohttp>=3.8.0",
+    "python-dotenv>=1.0.0",
 ]
-
-[project.urls]
-Homepage = "https://github.com/sajjadeakbari/seokar/"
-Bug Tracker = "https://github.com/sajjadeakbari/seokar/issues"
-Website = "https://sajjadakbari.ir"
-
-[project.scripts]
-seokar-welcome = "seokar.cli:welcome_message"
 
 [project.optional-dependencies]
-dev = ["pytest>=6.0", "pytest-cov>=2.0"]
-docs = ["sphinx>=4.0", "sphinx-rtd-theme>=0.5"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0",
+    "mypy>=1.8.0",
+    "ruff>=0.1.0",
+    "black>=24.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "twine>=5.0.0",
+    "types-requests>=2.31.0",
+]
+ahrefs = ["ahrefs-api>=2.0.0"]
+semrush = ["semrush-api>=1.5.0"]
+
+[project.urls]
+Homepage = "https://sajjadakbari.ir"
+Repository = "https://github.com/sajjadeakbari/seokar"
+Documentation = "https://sajjadeakbari.github.io/seokar"
+Changelog = "https://github.com/sajjadeakbari/seokar/blob/main/CHANGELOG.md"
+
+[project.scripts]
+seokar = "seokar.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["seokar"]
+
+[tool.ruff]
+line-length = 100
+select = [
+    "E", "F", "W", "I", 
+    "UP", "PL", "RUF",
+    "ANN", "BLE", "COM",
+    "DJ", "DTZ", "EM",
+    "ERA", "EXE", "FBT",
+    "ICN", "INP", "ISC",
+    "N", "PD", "PGH",
+    "PIE", "PT", "PTH",
+    "PYI", "RET", "SIM",
+    "SLF", "TCH", "TID",
+    "TRY", "YTT",
+]
+ignore = ["ANN101", "S101"]
+target-version = "py310"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--cov=seokar --cov-report=term-missing --cov-report=xml"
+testpaths = ["tests"]
+python_files = "test_*.py"
