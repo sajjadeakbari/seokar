@@ -1,0 +1,3 @@
+ahrefs-api>=2.0.0
+semrush-api>=1.5.0
+google-api-python-client>=2.0.0
